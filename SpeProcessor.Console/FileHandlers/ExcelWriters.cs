@@ -1,4 +1,6 @@
 ﻿using ClosedXML.Excel;
+using SpeProcessor;
+using SpeProcessor.Model;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ATD_File_Handler
+namespace SpeProcessorConsole
 {
     internal class ExcelWriters
     {
@@ -16,7 +18,7 @@ namespace ATD_File_Handler
         /// </summary>
         /// <param name="file"></param>
         /// <param name="destinationFolder"></param>
-        public static void WriteToExcel(SpectrumFile file, string destinationFolder)
+        public static void WriteToExcel(SpectrumFile file, HandledPeaks peaks, string destinationFolder, bool IsUseParentFolderName)
         {
             int curCellRow = 1;
             int curCellCol = 1;
@@ -26,18 +28,18 @@ namespace ATD_File_Handler
                 //Записываем скорости счета и коэффициенты вариации
                 curCellCol = 5;
                 sheet.Cell(1, curCellCol).Value = "Скорости счета (имп/с)";
-                foreach (var pd in file.PeakData)
+                foreach (var peak in peaks.Peaks)
                 {
-                    sheet.Cell(2, curCellCol).Value = $"{pd.Key}";
-                    sheet.Cell(3, curCellCol).Value = $"{pd.Value.CountRate}";
-                    sheet.Cell(4, curCellCol++).Value = $"{pd.Value.VariationCoefficient}";
+                    sheet.Cell(2, curCellCol).Value = $"{peak.PeakName}";
+                    sheet.Cell(3, curCellCol).Value = $"{peak.CountRate}";
+                    sheet.Cell(4, curCellCol++).Value = $"{peak.VariationCoefficient}";
                 }
                 curCellCol = 1;
                 //Записываем остальную информацию
                 sheet.Cell(curCellRow++, curCellCol).Value = "$DATE_MEA:";
-                sheet.Cell(curCellRow++, curCellCol).Value = file.measurementDateTime;
+                sheet.Cell(curCellRow++, curCellCol).Value = file.MeasurementDate;
                 sheet.Cell(curCellRow++, curCellCol).Value = "$MEAS_TIM:";
-                sheet.Cell(curCellRow++, curCellCol).Value = file.measurementDuration;
+                sheet.Cell(curCellRow++, curCellCol).Value = file.MeasurementDuration;
                 sheet.Cell(curCellRow++, curCellCol).Value = "$CPS:";
                 sheet.Cell(curCellRow++, curCellCol).Value = file.TotalCountRate;
                 curCellRow++;
@@ -67,7 +69,7 @@ namespace ATD_File_Handler
                 sheet.Cell(curCellRow++, curCellCol).Value = file.Geometry;
 
                 //Сохранение файла
-                string filename = (SaveConfig.IsUseParentFolderName ? (new FileInfo(file.FullPath)).Directory.Name : file.FileName) + ".xlsx";
+                string filename = (IsUseParentFolderName ? (new FileInfo(file.FullPath)).Directory.Name : file.FileName) + ".xlsx";
                 string filepath = Path.Combine(destinationFolder, filename);
                 try
                 {
@@ -80,7 +82,7 @@ namespace ATD_File_Handler
             }
         }
 
-        public static void WriteOneToExcelAllResults(List<SpectrumFile> files, string destinationFolder)
+        public static void WriteOneToExcelAllResults(List<SpectrumFile> files, IList<HandledPeaks> peaks,string destinationFolder)
         {
             int curCellRow = 1;
             int curCellCol = 1;
@@ -94,7 +96,8 @@ namespace ATD_File_Handler
                 sheet.Cell(curCellRow, 2).Value = "Родительская папка";
                 sheet.Cell(curCellRow, 3).Value = "Полный путь к файлу";
                 sheet.Cell(curCellRow, 4).Value = "Суммар. скор. счета (имп/с)";
-                curCellCol = 5;
+                sheet.Cell(curCellRow, 5).Value = "Спектрометр";
+                curCellCol = 6;
                 for (int i = 0; i < peaksCount; i++)
                 {
                     var range_name = iie_peaks_definition[i].RangeName;
@@ -106,36 +109,37 @@ namespace ATD_File_Handler
 
                 curCellRow++;
                 //Записываем численные значения
-                foreach (var file in files)
+                for(int i = 0; i < files.Count; i++)
                 {
                     //Запись заголовков файла
                     try
                     {
-                        string parent_dir = (new FileInfo(file.FullPath)).Directory.Name;
-                        Trace.WriteLine(parent_dir);
-                        sheet.Cell(curCellRow, 1).Value = file.FileName;
+                        string parent_dir = (new FileInfo(files[i].FullPath)).Directory.Name;
+                        //Trace.WriteLine(parent_dir);
+                        sheet.Cell(curCellRow, 1).Value = files[i].FileName;
                         sheet.Cell(curCellRow, 2).Value = parent_dir;
-                        sheet.Cell(curCellRow, 3).Value = file.FullPath;
+                        sheet.Cell(curCellRow, 3).Value = files[i].FullPath;
                     }
                     catch (Exception ex)
                     {
-                        Trace.WriteLine($"Can't extract parent folder for file {file.FileName}\n{ex.Message}");
+                        Trace.WriteLine($"Can't extract parent folder for file {files[i].FileName}\n{ex.Message}");
                         //sheet.Cell(curCellRow, 2).Value = file.FileName;
                     }
                     //Записываем скорости счета и название файла
-                    sheet.Cell(curCellRow, 4).Value = file.TotalCountRate.ToString() + " (" +file.Detector.Name + ")";
-                    curCellCol = 5;
-                    for (int i = 0; i < peaksCount; i++)
+                    sheet.Cell(curCellRow, 4).Value = files[i].TotalCountRate;
+                    sheet.Cell(curCellRow, 5).Value = files[i].Detector?.Name ?? "Undefined";
+
+                    curCellCol = 6;
+                    for (int j = 0; j < peaks[i].PeaksCount; j++)
                     {
-                        var peak_name = file.Detector.PeaksDefinition[i].RangeName;
                         //Записываем скорость счета
-                        sheet.Cell(curCellRow, curCellCol + i).Value = file.PeakData[peak_name].CountRate;
+                        sheet.Cell(curCellRow, curCellCol + j).Value = peaks[i][j].CountRate;
                         //Записываем площадь пика
-                        sheet.Cell(curCellRow, curCellCol + peaksCount + i).Value = file.PeakData[peak_name].PeakArea;
+                        sheet.Cell(curCellRow, curCellCol + peaksCount + j).Value = peaks[i][j].PeakArea;
                         //Записываем суммарное кол. импульсов в пике
-                        sheet.Cell(curCellRow, curCellCol + peaksCount * 2 + i).Value = file.PeakData[peak_name].TotalPeakSum;
+                        sheet.Cell(curCellRow, curCellCol + peaksCount * 2 + j).Value = peaks[i][j].FullPeakArea;
                         //Записываем коэф вариации
-                        sheet.Cell(curCellRow, curCellCol + peaksCount * 3 + i).Value = file.PeakData[peak_name].VariationCoefficient;
+                        sheet.Cell(curCellRow, curCellCol + peaksCount * 3 + j).Value = peaks[i][j].VariationCoefficient;
 
                     }
                     curCellRow++;

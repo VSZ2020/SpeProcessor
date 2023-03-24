@@ -1,4 +1,4 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
+﻿using SpeProcessor;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ATD_File_Handler
+namespace SpeProcessorConsole
 {
     internal class FileReaders
     {
@@ -27,7 +27,7 @@ namespace ATD_File_Handler
                     if (line == "$DATE_MEA:")
                     {
                         //Extract start date from file
-                        file.measurementDateTime = rd.ReadLine();
+                        file.MeasurementDate = rd.ReadLine();
                         continue;
                     }
                     if (line == "$CPS:")
@@ -36,7 +36,9 @@ namespace ATD_File_Handler
                     }
                     if (line == "$MEAS_TIM:")
                     {
-                        int.TryParse(rd.ReadLine().Split(' ')[0], out file.measurementDuration);
+                        int bufferedValue = 0;
+                        int.TryParse(rd.ReadLine().Split(' ')[0], out bufferedValue);
+                        file.MeasurementDuration = bufferedValue;
                         continue;
                     }
                     if (line == "$DATA:")
@@ -85,7 +87,9 @@ namespace ATD_File_Handler
                     }
                     if (line == "$DOSE_RATE:")
                     {
-                        float.TryParse(rd.ReadLine(), out file.DoseRate);
+                        float bufferDoseRate = 0;
+                        float.TryParse(rd.ReadLine(), out bufferDoseRate);
+                        file.DoseRate = bufferDoseRate;
                     }
                     if (line == "$DU_NAME:")
                     {
@@ -117,41 +121,6 @@ namespace ATD_File_Handler
                     file.Detector = Configs.GetDefaultSpectrometers()["Alpha"];
             }
             return file;
-        }
-        
-        public static List<string> SearchSpectrumFiles(string rootFolder)
-        {
-            List<string> speFiles = new List<string>(0);
-            foreach (string f in Directory.GetFiles(rootFolder))
-            {
-                if (f.Substring(f.Length - 4, 4) == ".spe")
-                {
-                    speFiles.Add(Path.Combine(rootFolder,f));
-                }
-            }
-            foreach (string dir in Directory.GetDirectories(rootFolder))
-            {
-                speFiles.AddRange(SearchSpectrumFiles(dir));
-            }
-            return speFiles;
-        }
-
-        public static List<string> SearchSpectrumFilesAsync(string rootFolder)
-        {
-            List<string> speFiles = new List<string>(0);
-            Parallel.ForEach(Directory.GetFiles(rootFolder), (string f) => {
-                if (f.Substring(f.Length - 4, 4) == ".spe")
-                {
-                    speFiles.Add(Path.Combine(rootFolder, f));
-                }
-            });
-
-            Parallel.ForEach(Directory.GetDirectories(rootFolder), (string dir) =>
-            {
-                speFiles.AddRange(SearchSpectrumFiles(dir));
-            });
-            
-            return speFiles;
         }
     }
 }

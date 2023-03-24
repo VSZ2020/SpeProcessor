@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ATD_File_Handler
+namespace SpeProcessor
 {
     public class PeakData
     {
         public string PeakName { get; set; }
         public float CountRate { get; set; }
         public float PeakArea { get; set; }
-        public float TotalPeakSum { get; set; }
+        public float FullPeakArea { get; set; }
         public float VariationCoefficient
         {
             get
@@ -19,7 +19,7 @@ namespace ATD_File_Handler
                 float coeff = 0.0F;
                 if (PeakArea > 0)
                 {
-                    coeff = (float)Math.Sqrt(PeakArea + TotalPeakSum) / PeakArea;
+                    coeff = (float)Math.Sqrt(PeakArea + FullPeakArea) / PeakArea;
                 }
                 return coeff;
             }

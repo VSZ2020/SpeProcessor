@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ATD_File_Handler
+namespace SpeProcessor
 {
     public class SpectrumFile
     {
@@ -13,19 +13,21 @@ namespace ATD_File_Handler
         public string FileName { get; set; }
         public int[] Counts;
         public float[] ChannelToEnergyFit;
-        public int measurementDuration = 3600;
-        public string measurementDateTime;
-        public float TotalCountRate = 0F;
-        public float Temperature = 1;
-        public float DoseRate = 0F;
+        public int MeasurementDuration { get; set; } = 3600;
+        public string MeasurementDate { get; set; }
+        public float TotalCountRate = 0f;
+        public float Temperature = 1f;
+        public float DoseRate { get; set; } = 0F;
         public string DU_NAME = "";
         public string Radionuclides = "";
         public string ActivityResult = "";
         public string EffectiveActivity = "";
-        public string Geometry = "";
+        public string Geometry { get; set; } = "";
 
-        public Dictionary<string, PeakData> PeakData;
-        public Spectrometer Detector { get; set; }
+        /// <summary>
+        /// Spectrometer used for spectrum obtaining
+        /// </summary>
+        public Spectrometer? Detector { get; set; }
 
         public SpectrumFile(string full_path)
         {

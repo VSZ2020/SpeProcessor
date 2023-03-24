@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ATD_File_Handler
+namespace SpeProcessorConsole
 {
     public class SaveConfig
     {

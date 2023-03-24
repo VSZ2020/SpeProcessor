@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace ATD_File_Handler
+namespace SpeProcessor
 {
     public class Spectrometer
     {
         public string Name { get; set; }
-        public List<PeaksToCalc> PeaksDefinition { get; set; }
+        public List<PeakRangeData> PeaksDefinition { get; set; } = new();
     }
 }

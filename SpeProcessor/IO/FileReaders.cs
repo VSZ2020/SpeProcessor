@@ -1,14 +1,8 @@
 ﻿using SpeProcessor;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace SpeProcessorConsole
+namespace SpeProcessor.IO
 {
-    internal class FileReaders
+    public class FileReaders
     {
         public static SpectrumFile ReadSpecFile(string file_path)
         {
@@ -115,10 +109,11 @@ namespace SpeProcessorConsole
                 //Detect spectrometer type
                 if (file.Counts[0] == file.Counts[1] && file.Counts[1] == file.Counts[2] && file.Counts[2] == file.Counts[3])
                 {
-                    file.Detector = Configs.GetDefaultSpectrometers()["IIE"];
+                    //IIE Spectrometer
+                    file.Detector = AvailableSpectrometers.Spectrometers[new Guid("5315AF3E-7184-44FF-94F5-523137D24ABE")];
                 }
                 else
-                    file.Detector = Configs.GetDefaultSpectrometers()["Alpha"];
+                    file.Detector = AvailableSpectrometers.Spectrometers[new Guid("B3D7CA49-69D1-40B1-BB28-0CB065DC2C32")];
             }
             return file;
         }

@@ -86,7 +86,7 @@ namespace SpeProcessorConsole
         {
             int curCellRow = 1;
             int curCellCol = 1;
-            var iie_peaks_definition = Configs.GetDefaultSpectrometers()["IIE"].PeaksDefinition;
+            var iie_peaks_definition = AvailableSpectrometers.GetFirst().PeaksDefinition;
             int peaksCount = iie_peaks_definition.Count;
             using (var wb = new XLWorkbook())
             {

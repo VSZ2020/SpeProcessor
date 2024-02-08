@@ -10,6 +10,8 @@ namespace SpeProcessor
     public class Spectrometer
     {
         public string Name { get; set; }
+        public Guid Id { get; set; }
         public List<PeakRangeData> PeaksDefinition { get; set; } = new();
+        public Dictionary<string, float> CalibrationCoefficients = new();
     }
 }

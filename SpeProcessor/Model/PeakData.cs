@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SpeProcessor
+﻿namespace SpeProcessor
 {
     public class PeakData
     {
@@ -19,7 +13,7 @@ namespace SpeProcessor
                 float coeff = 0.0F;
                 if (PeakArea > 0)
                 {
-                    coeff = (float)Math.Sqrt(PeakArea + FullPeakArea) / PeakArea;
+                    coeff = (float)Math.Sqrt(2 * FullPeakArea - PeakArea) / PeakArea;
                 }
                 return coeff;
             }

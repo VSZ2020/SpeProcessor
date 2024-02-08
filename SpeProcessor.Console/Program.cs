@@ -1,16 +1,27 @@
 ﻿using SpeProcessor;
+using SpeProcessor.IO;
 using SpeProcessor.Model;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 
 namespace SpeProcessorConsole
 {
     class Program
     {
         static void Main(string[] args)
+        {
+            try
+            {
+                RunSPEHandler(args);
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(ex.Message);
+                Console.ResetColor();
+            }
+        }
+
+        
+        private static void RunSPEHandler(string[] args)
         {
             string WORKDIR = Directory.GetCurrentDirectory();
             Console.WriteLine("Welcome to the '.spe' file handler!");
@@ -20,7 +31,6 @@ namespace SpeProcessorConsole
                     WORKDIR = Directory.GetParent(args[0]).FullName;
                 else
                     WORKDIR = args[0];
-
             }
             else
             {
@@ -35,10 +45,10 @@ namespace SpeProcessorConsole
             Console.WriteLine("Reading the list of calculation channels ranges...");
 
             //Берем набор пиков у первого спектрометра
-            List<PeakRangeData> peakRanges = Configs.GetDefaultSpectrometers()["IIE"].PeaksDefinition;
+            List<PeakRangeData> peakRanges = AvailableSpectrometers.Spectrometers[new Guid("5315AF3E-7184-44FF-94F5-523137D24ABE")].PeaksDefinition;
 
             Console.Write("Searching the '*.spe' files in subfolders. Please, wait ...");
-            List<string> speFilePaths = FileSearcher.SearchSpectrumFilesAsync(WORKDIR);
+            List<string> speFilePaths = FileSearcher.SearchSpectrumFiles(WORKDIR.Trim('\"'));
             Console.WriteLine("OK!");
 
             if (speFilePaths.Count > 0)
@@ -138,97 +148,5 @@ namespace SpeProcessorConsole
             Console.Write("Press any key to exit from application...");
             Console.ReadKey();
         }
-
-        /// <summary>
-        /// Calculates area under peak in predefined range
-        /// </summary>
-        /// <param name="counts">Array of pulses</param>
-        /// <param name="start_channel_index">Index of start channel for integration</param>
-        /// <param name="end_channel_index"> Index of the last channel for integration</param>
-        /// <returns></returns>
-        //private static void GetPeakParameters(SpectrumFile file, PeakRangeData p)
-        //{
-        //    //Смещение каналов при обработке спектра
-        //    int channels_offset = (file.Detector.Name == "Alpha") ? +1 : 0;
-        //    int start_channel_index = p.StartChannelIndex + channels_offset;
-        //    int end_channel_index = p.EndChannelIndex + channels_offset;
-
-        //    //Массив числа импульсов в спектре
-        //    int[] counts = file.Counts;
-        //    if (counts.Length < 2 || start_channel_index > end_channel_index)
-        //    {
-        //        return;
-        //    }
-        //    else
-        //    {
-        //        //Размер окна усреднения
-        //        int window_of_averaging = p.AveragingWindowSize;
-        //        //Среднее по 5 каналам, предшествующим началу пика
-        //        float average_at_start = 0.0F;
-        //        //Среднее по 5 каналам, последующим после конца пика
-        //        float average_at_end = 0.0F;
-        //        //Количество обрабатываемых каналов
-        //        int handled_channels_count = end_channel_index - start_channel_index - 1;
-
-        //        //Усредняем по началу пика
-        //        if (start_channel_index > 0)
-        //        {
-        //            //Усредняем по отсчетам в каналах (идем в сторону уменьшения индекса канала)
-        //            int counts_sum = 0;
-        //            int channels_count = 0;
-        //            for (int i = start_channel_index; i >= 0 && (start_channel_index - i) < window_of_averaging; i--)
-        //            {
-        //                counts_sum += counts[i];
-        //                channels_count++;
-        //            }
-        //            average_at_start = (float)counts_sum / channels_count;
-        //        }
-        //        //Если до указанного канала нет значений, то принимаем первый канал за среднее
-        //        else
-        //            average_at_start = counts[0];
-
-        //        //Усредняем по концу пика
-        //        if (end_channel_index < counts.Length - 1)
-        //        {
-        //            int counts_sum = 0;
-        //            int channels_count = 0;
-        //            for (int i = end_channel_index; i < counts.Length && (i - end_channel_index) < window_of_averaging; i++)
-        //            {
-        //                counts_sum += counts[i];
-        //                channels_count++;
-        //            }
-        //            average_at_end = (float)counts_sum / channels_count;
-        //        }
-        //        //Если после указанного канала нет значений, то принимаем последний канал за среднее
-        //        else
-        //            average_at_end = counts[counts.Length - 1];
-
-        //        //Получаем коэффициенты уравнения прямой пъедестала
-        //        float slope = (average_at_end - average_at_start) / handled_channels_count;
-        //        //float intercept = counts[start_channel_index] - slope * start_channel_index;
-        //        //Trace.WriteLine($"Наклон: {slope}, отрезок: {intercept}");
-
-        //        //Integration with rectangle-based method
-        //        //In this case we have taken into account the baseline of peak 
-        //        float peak_sum = 0f;
-        //        float total_counts_sum = 0f;
-        //        float psum = average_at_start;
-        //        for (int i = start_channel_index + 1; i < end_channel_index; i++)
-        //        {
-        //            //sum += counts[i] - (slope * i + intercept);          //Step is 1 and equal to channel width
-        //            psum += slope;
-        //            peak_sum += counts[i] - psum;
-        //            total_counts_sum += counts[i];
-        //        }
-        //        //Записываем полученные значения
-        //        var peak_data = new PeakData();
-        //        peak_data.PeakArea = peak_sum;
-        //        peak_data.FullPeakArea = total_counts_sum;
-        //        peak_data.PeakName = p.RangeName;
-        //        peak_data.CountRate = peak_sum / file.MeasurementDuration;
-        //        file.PeakData.Add(p.RangeName, peak_data);
-        //    }
-        //}
-
     }
 }
